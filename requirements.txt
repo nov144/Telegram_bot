@@ -1,2 +1,4 @@
-aiogram==2.25.1￼Enter
+aiogram==2.23.1
+
+
 
