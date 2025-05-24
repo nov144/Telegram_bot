@@ -8,7 +8,7 @@ dp = Dispatcher(bot)
 @dp.message_handler(commands=["start"])
 async def start(message:types.Message):
     await message.reply("Привет! Я бот!")
-@dp.message_handler()
+@dp.message_handler(commands=["puk"])
 async def echo(message: types.Message):
     await message.reply(f"Ты сказал: {message.text}")
 
