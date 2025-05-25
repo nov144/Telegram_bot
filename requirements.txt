@@ -1,5 +1,6 @@
 aiogram==2.23.1
 python-dotenv
+aiogram-calendar
 
 
 
