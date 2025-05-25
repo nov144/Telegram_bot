@@ -71,7 +71,7 @@ async def process_phone(message: types.Message, state: FSMContext):
     await message.answer(summary)
 
     # Здесь можно отправить сообщение мастеру (владелец бота)
-      await bot.send_message(300466559, summary)
+    await bot.send_message(300466559, summary)
 
     await state.finish()
 
