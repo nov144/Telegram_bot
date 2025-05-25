@@ -4,15 +4,16 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 
+from aiogram_calendar import simple_cal_callback, SimpleCalendar
 from states import BookingStates
 import os
 
 # Инициализация бота
-bot = Bot(token=os.getenv("BOT_TOKEN"))  # BOT_TOKEN из Render переменной
-storage = MemoryStorage()  # FSM-хранилище
+bot = Bot(token=os.getenv("BOT_TOKEN"))
+storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-# Обработка /start
+# Обработка команды /start
 @dp.message_handler(commands=["start"])
 async def start_handler(message: types.Message):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -20,17 +21,62 @@ async def start_handler(message: types.Message):
     keyboard.add(KeyboardButton("Контакты"))
     await message.answer("Привет! Я бот для записи к мастеру. Выберите действие:", reply_markup=keyboard)
 
-# Нажатие на кнопку "Записаться"
+# Пользователь нажал "Записаться" — начинаем FSM
 @dp.message_handler(lambda message: message.text == "Записаться")
 async def start_booking(message: types.Message):
     await message.answer("Как вас зовут?")
-    await BookingStates.waiting_for_name.set()  # переключаемся в состояние "ждём имя"
+    await BookingStates.waiting_for_name.set()
+
+# Получаем имя и показываем календарь
 @dp.message_handler(state=BookingStates.waiting_for_name)
 async def process_name(message: types.Message, state: FSMContext):
-    await state.update_data(name=message.text)  # сохраняем имя
-    await message.answer("Отлично, теперь выберите дату записи.")
-    await BookingStates.waiting_for_date.set()  # переходим к следующему шагу
+    await state.update_data(name=message.text)
+
+    await message.answer(
+        "Выберите дату записи:",
+        reply_markup=await SimpleCalendar().start_calendar()
+    )
+    await BookingStates.waiting_for_date.set()
+
+# Пользователь выбрал дату из календаря
+@dp.callback_query_handler(simple_cal_callback.filter(), state=BookingStates.waiting_for_date)
+async def process_date(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
+
+    if selected:
+        await state.update_data(date=str(date))
+        await callback_query.message.answer(f"Вы выбрали: {date.strftime('%d.%m.%Y')}")
+        await callback_query.answer()
+
+        await callback_query.message.answer("Введите номер телефона:")
+        await BookingStates.waiting_for_phone.set()
+
+# Получаем номер телефона и завершаем запись
+@dp.message_handler(state=BookingStates.waiting_for_phone)
+async def process_phone(message: types.Message, state: FSMContext):
+    await state.update_data(phone=message.text)
+
+    data = await state.get_data()
+    name = data["name"]
+    date = data["date"]
+    phone = data["phone"]
+
+    summary = (
+        f"Запись подтверждена!\n\n"
+        f"Имя: {name}\n"
+        f"Дата: {date}\n"
+        f"Телефон: {phone}"
+    )
+
+    await message.answer(summary)
+
+    # Здесь можно отправить сообщение мастеру (владелец бота)
+    # await bot.send_message(YOUR_CHAT_ID, summary)
+
+    await state.finish()
+
 # Запуск бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+
 
