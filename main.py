@@ -69,7 +69,7 @@ async def process_phone(message: types.Message, state: FSMContext):
     )
 
     await message.answer(summary)
-    await bot.send_message(300466559, summary)  # ← здесь твой chat_id
+    await bot.send_message(-1002293928496, summary)  # ← здесь твой chat_id
     await state.finish()
 
 
