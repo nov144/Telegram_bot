@@ -54,12 +54,24 @@ async def process_date(callback_query: types.CallbackQuery, callback_data: dict,
 # Получаем номер телефона и завершаем запись
 @dp.message_handler(state=BookingStates.waiting_for_phone)
 async def process_phone(message: types.Message, state: FSMContext):
-    await state.update_data(phone=message.text)
+    phone = message.text
+    await state.update_data(phone=phone)
 
     data = await state.get_data()
     name = data["name"]
     date = data["date"]
-    phone = data["phone"]
+
+    summary = (
+        f"Запись подтверждена!\n\n"
+        f"Имя: {name}\n"
+        f"Дата: {date}\n"
+        f"Телефон: {phone}"
+    )
+
+    await message.answer(summary)
+    await bot.send_message(300466559, summary)  # ← здесь твой chat_id
+    await state.finish()
+
 
     summary = (
         f"Запись подтверждена!\n\n"
