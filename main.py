@@ -25,12 +25,12 @@ async def start_handler(message: types.Message):
 async def start_booking(message: types.Message):
     await message.answer("Как вас зовут?")
     await BookingStates.waiting_for_name.set()  # переключаемся в состояние "ждём имя"
-
-# Запуск бота
-if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
 @dp.message_handler(state=BookingStates.waiting_for_name)
 async def process_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)  # сохраняем имя
     await message.answer("Отлично, теперь выберите дату записи.")
     await BookingStates.waiting_for_date.set()  # переходим к следующему шагу
+# Запуск бота
+if __name__ == "__main__":
+    executor.start_polling(dp, skip_updates=True)
+
