@@ -29,3 +29,8 @@ async def start_booking(message: types.Message):
 # Запуск бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+@dp.message_handler(state=BookingStates.waiting_for_name)
+async def process_name(message: types.Message, state: FSMContext):
+    await state.update_data(name=message.text)  # сохраняем имя
+    await message.answer("Отлично, теперь выберите дату записи.")
+    await BookingStates.waiting_for_date.set()  # переходим к следующему шагу
