@@ -31,14 +31,14 @@ async def start_booking(message: types.Message):
 async def process_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
 
-  from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove
 
-await message.answer(
+    await message.answer(
     "Выберите дату записи:",
     reply_markup=ReplyKeyboardRemove()
 )
 
-await message.answer(
+    await message.answer(
     "Пожалуйста, выберите дату:",
     reply_markup=await SimpleCalendar().start_calendar()
 )
