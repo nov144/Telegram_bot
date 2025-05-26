@@ -18,7 +18,6 @@ dp = Dispatcher(bot, storage=storage)
 async def start_handler(message: types.Message):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(KeyboardButton("Записаться"))
-    keyboard.add(KeyboardButton("Контакты"))
     await message.answer("Привет! Я бот для записи к мастеру. Выберите действие:", reply_markup=keyboard)
 
 # Пользователь нажал "Записаться" — начинаем FSM
@@ -32,11 +31,18 @@ async def start_booking(message: types.Message):
 async def process_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
 
-    await message.answer(
-        "Выберите дату записи:",
-        reply_markup=await SimpleCalendar().start_calendar()
-    )
-    await BookingStates.waiting_for_date.set()
+  from aiogram.types import ReplyKeyboardRemove
+
+await message.answer(
+    "Выберите дату записи:",
+    reply_markup=ReplyKeyboardRemove()
+)
+
+await message.answer(
+    "Пожалуйста, выберите дату:",
+    reply_markup=await SimpleCalendar().start_calendar()
+)
+
 
 # Пользователь выбрал дату из календаря
 @dp.callback_query_handler(simple_cal_callback.filter(), state=BookingStates.waiting_for_date)
