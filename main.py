@@ -1,6 +1,7 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 
@@ -30,8 +31,6 @@ async def start_booking(message: types.Message):
 @dp.message_handler(state=BookingStates.waiting_for_name)
 async def process_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
-
-from aiogram.types import ReplyKeyboardRemove
 
     await message.answer(
     "Выберите дату записи:",
