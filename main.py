@@ -48,13 +48,15 @@ async def process_name(message: types.Message, state: FSMContext):
 async def process_date(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
 
-    if selected:
-        await state.update_data(date=str(date))
-        await callback_query.message.answer(f"Вы выбрали: {date.strftime('%d.%m.%Y')}")
-        await callback_query.answer()
+    if not selected:
+        return  # ничего не делать, если выбрана не дата, а стрелка
 
-        await callback_query.message.answer("Введите номер телефона:")
-        await BookingStates.waiting_for_phone.set()
+    await state.update_data(date=str(date))
+    await callback_query.message.answer(f"Вы выбрали: {date.strftime('%d.%m.%Y')}")
+    await callback_query.answer()
+
+    await callback_query.message.answer("Введите номер телефона:")
+    await BookingStates.waiting_for_phone.set()
 
 # Получаем номер телефона и завершаем запись
 @dp.message_handler(state=BookingStates.waiting_for_phone)
