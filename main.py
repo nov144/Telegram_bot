@@ -1,3 +1,7 @@
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
@@ -12,6 +16,13 @@ import os
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
+
+# Подключение к Google Таблице
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+client = gspread.authorize(creds)
+SPREADSHEET_ID = "130eO8Wl9ezkXEgbM6CnHt6C2k_lFKYKttbDqfN69mxg"
+sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
 # Команда /start
 @dp.message_handler(commands=["start"])
@@ -30,13 +41,12 @@ async def start_booking(message: types.Message):
 @dp.message_handler(state=BookingStates.waiting_for_name)
 async def process_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
-
     await message.answer("Выберите дату записи:", reply_markup=ReplyKeyboardRemove())
     await message.answer(
         "Пожалуйста, выберите дату:",
         reply_markup=await SimpleCalendar().start_calendar()
     )
-    await BookingStates.waiting_for_date.set()  # ← ВАЖНО
+    await BookingStates.waiting_for_date.set()
 
 # Обработка даты
 @dp.callback_query_handler(simple_cal_callback.filter(), state=BookingStates.waiting_for_date)
@@ -49,7 +59,6 @@ async def process_date(callback_query: types.CallbackQuery, callback_data: dict,
     await state.update_data(date=str(date))
     await callback_query.message.answer(f"Вы выбрали: {date.strftime('%d.%m.%Y')}")
     await callback_query.answer()
-
     await callback_query.message.answer("Введите номер телефона:")
     await BookingStates.waiting_for_phone.set()
 
@@ -70,18 +79,19 @@ async def process_phone(message: types.Message, state: FSMContext):
         f"Телефон: {phone}"
     )
 
+    # Сохраняем в Google Таблицу
+    timestamp = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+    sheet.append_row([name, date, phone, timestamp])
+
     await message.answer(summary)
 
-    # Отправка владельцу (замени chat_id при необходимости)
-    await bot.send_message(-1002293928496, summary)  # группа
-    await bot.send_message(300466559, summary)       # личка
+    # Отправка мастеру
+    await bot.send_message(-1002293928496, summary)  # Группа
+    await bot.send_message(300466559, summary)       # Личный ID
 
     await state.finish()
 
 # Запуск
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
-
-
-
 
