@@ -53,6 +53,10 @@ async def process_name(message: types.Message, state: FSMContext):
 async def process_date(callback: CallbackQuery, state: FSMContext):
     import logging
     logging.info("🔔 Обработчик календаря вызван")
+    logging.info(f"📩 Callback data = {callback.data}")
+    current_state = await state.get_state()
+    logging.info(f"📍 FSM state = {current_state}")
+
 
     current_state = await state.get_state()
     if current_state != BookingStates.waiting_for_date.state:
