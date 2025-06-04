@@ -51,6 +51,9 @@ async def process_name(message: types.Message, state: FSMContext):
 # Обработка даты
 @router.callback_query()
 async def process_date(callback: CallbackQuery, state: FSMContext):
+    import logging
+    logging.info("🔔 Обработчик календаря вызван")
+
     current_state = await state.get_state()
     if current_state != BookingStates.waiting_for_date.state:
         await callback.answer()
