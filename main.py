@@ -60,7 +60,7 @@ async def process_date(callback: CallbackQuery, state: FSMContext):
         return
 
     calendar = SimpleCalendar()
-    selected, date = await calendar.process_selection(callback)
+    selected, date = await calendar.process_selection(callback, callback.data)
 
     if not selected:
         await callback.answer()
