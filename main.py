@@ -49,18 +49,26 @@ async def process_name(message: types.Message, state: FSMContext):
     await BookingStates.waiting_for_date.set()
 
 # Обработка даты
-@dp.callback_query_handler(simple_cal_callback.filter(), state=BookingStates.waiting_for_date)
-async def process_date(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
-    selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
+@router.callback_query()
+async def process_date(callback: CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != BookingStates.waiting_for_date.state:
+        await callback.answer()
+        return
+
+    calendar = SimpleCalendar()
+    selected, date = await calendar.process_selection(callback)
 
     if not selected:
+        await callback.answer()
         return
 
     await state.update_data(date=str(date))
-    await callback_query.message.answer(f"Вы выбрали: {date.strftime('%d.%m.%Y')}")
-    await callback_query.answer()
-    await callback_query.message.answer("Введите номер телефона:")
-    await BookingStates.waiting_for_phone.set()
+    await callback.message.answer(f"Вы выбрали: {date.strftime('%d.%m.%Y')}")
+    await callback.message.answer("Введите номер телефона:")
+    await state.set_state(BookingStates.waiting_for_phone)
+    await callback.answer()
+
 
 # Получаем телефон
 @dp.message_handler(state=BookingStates.waiting_for_phone)
